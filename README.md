@@ -21,6 +21,7 @@ ML-Hate-Comments-Classification/
 │   └── test_controllers.py    # Testes dos controllers
 ├── hate_speech_classifier_model.pkl # Modelo treinado
 ├── model_info.json        # Informações do modelo
+├── HATE_COMMENTS_CLASSIFICATION.ipynb # Notebook com código de treinamento
 └── requirements.txt       # Dependências
 ```
 
@@ -114,6 +115,16 @@ Esta estrutura facilita:
 - Testes unitários e de integração
 - Reutilização de componentes
 - Separação de responsabilidades (SOLID)
+
+## 🤖 Sobre o Modelo
+
+O modelo de Machine Learning foi treinado no **Google Colab** e todo o código de treinamento, análise exploratória e avaliação está disponível no arquivo `HATE_COMMENTS_CLASSIFICATION.ipynb`. Este notebook contém:
+
+- Análise exploratória dos dados
+- Pré-processamento e limpeza de texto
+- Treinamento e comparação de diferentes algoritmos
+- Avaliação de métricas de desempenho
+- Exportação do modelo final
 
 ## 📝 Notas
 
