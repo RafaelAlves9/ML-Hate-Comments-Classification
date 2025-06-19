@@ -10,31 +10,25 @@ import os
 from datetime import datetime
 import logging
 
-
-# Configuração de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Permite requisições de qualquer origem (ajuste conforme necessário)
+CORS(app)
 
-# Variáveis globais para o modelo e informações
 model = None
 model_info = None
 
 def load_model():
-    """Carrega o modelo treinado e suas informações"""
     global model, model_info
     
     try:
-        # Carregar o modelo
         if os.path.exists('hate_speech_classifier_model.pkl'):
             model = joblib.load('hate_speech_classifier_model.pkl')
             logger.info("✅ Modelo carregado com sucesso!")
         else:
             raise FileNotFoundError("Arquivo do modelo não encontrado!")
         
-        # Carregar informações do modelo
         if os.path.exists('model_info.json'):
             with open('model_info.json', 'r') as f:
                 model_info = json.load(f)
@@ -48,67 +42,41 @@ def load_model():
         raise e
 
 def preprocess_text(text):
-    """
-    Função para pré-processar texto (mesma do notebook):
-    - Converte para minúsculas
-    - Remove pontuação
-    - Remove números
-    - Remove espaços extras
-    """
     if pd.isna(text) or text is None:
         return ""
     
-    # Converter para string e minúsculas
     text = str(text).lower()
-    
-    # Remover pontuação
     text = text.translate(str.maketrans('', '', string.punctuation))
-    
-    # Remover números
     text = re.sub(r'\d+', '', text)
-    
-    # Remover espaços extras
     text = ' '.join(text.split())
     
     return text
 
 def predict_hate_speech(comment, model):
-    """
-    Função para predizer se um comentário é discurso de ódio
-    Compatível com LinearSVC (sem predict_proba)
-    """
     try:
-        # Pré-processar o comentário
         processed_comment = preprocess_text(comment)
         
         if not processed_comment.strip():
             return "Comentário inválido", 0.0, "error"
         
-        # Fazer predição
         prediction = model.predict([processed_comment])[0]
         
-        # Tentar obter confiança
         confidence = 0.0
         confidence_method = "none"
         
         try:
-            # Tenta usar predict_proba (para modelos como SVC, Naive Bayes, etc.)
             probability = model.predict_proba([processed_comment])[0]
             confidence = max(probability) * 100
             confidence_method = "probability"
         except AttributeError:
             try:
-                # Para LinearSVC e outros que não têm predict_proba
                 decision = model.decision_function([processed_comment])[0]
-                # Normaliza usando função sigmoide para [0, 1]
                 confidence = 100 * (1 / (1 + np.exp(-abs(decision))))
                 confidence_method = "decision_function"
             except:
-                # Se nenhum método funcionar, usa confiança padrão
                 confidence = 50.0
                 confidence_method = "default"
         
-        # Interpretar resultado
         result = "Não é discurso de ódio" if prediction == 1 else "É discurso de ódio"
         
         return result, confidence, confidence_method
@@ -119,7 +87,6 @@ def predict_hate_speech(comment, model):
 
 @app.route('/', methods=['GET'])
 def home():
-    """Endpoint de status da API"""
     return jsonify({
         'status': 'API funcionando!',
         'model_loaded': model is not None,
@@ -133,7 +100,6 @@ def home():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Endpoint de health check"""
     return jsonify({
         'status': 'healthy',
         'model_loaded': model is not None,
@@ -142,7 +108,6 @@ def health_check():
 
 @app.route('/model-info', methods=['GET'])
 def get_model_info():
-    """Endpoint para obter informações do modelo"""
     if model_info:
         return jsonify(model_info)
     else:
@@ -150,16 +115,13 @@ def get_model_info():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """Endpoint principal para classificação de comentários"""
     try:
-        # Verificar se o modelo está carregado
         if model is None:
             return jsonify({
                 'error': 'Modelo não carregado',
                 'message': 'O modelo de ML não foi carregado corretamente'
             }), 500
         
-        # Obter dados da requisição
         data = request.get_json()
         
         if not data:
@@ -182,7 +144,6 @@ def predict():
                 'message': 'Campo "comment" deve ser uma string não vazia'
             }), 400
         
-        # Fazer a predição
         result, confidence, confidence_method = predict_hate_speech(comment, model)
         
         if confidence_method == "error":
@@ -191,7 +152,6 @@ def predict():
                 'message': result
             }), 500
         
-        # Preparar resposta
         response = {
             'comment': comment,
             'prediction': result,
@@ -202,7 +162,6 @@ def predict():
             'timestamp': datetime.now().isoformat()
         }
         
-        # Log da predição
         logger.info(f"Predição realizada: {result} (confiança: {confidence:.2f}%)")
         
         return jsonify(response)
@@ -216,7 +175,6 @@ def predict():
 
 @app.route('/predict/batch', methods=['POST'])
 def predict_batch():
-    """Endpoint para classificação em lote de múltiplos comentários"""
     try:
         if model is None:
             return jsonify({
@@ -240,7 +198,7 @@ def predict_batch():
                 'message': 'Campo "comments" deve ser uma lista'
             }), 400
         
-        if len(comments) > 100:  # Limite de segurança
+        if len(comments) > 100:
             return jsonify({
                 'error': 'Muitos comentários',
                 'message': 'Máximo de 100 comentários por requisição'
@@ -304,10 +262,8 @@ def internal_error(error):
 
 if __name__ == '__main__':
     try:
-        # Carregar o modelo na inicialização
         load_model()
         
-        # Iniciar o servidor
         print("🚀 Iniciando servidor Flask...")
         print("📊 API de Classificação de Discurso de Ódio")
         print("🔗 Endpoints disponíveis:")
