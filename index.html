@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hate Speech Classifier - Classificador de Discurso de Ódio</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Hate Speech Classifier</h1>
+            <p>Classifique comentários como discurso de ódio usando inteligência artificial</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('single')">
+                <i class="fas fa-comment"></i> Comentário Único
+            </button>
+        </div>
+
+        <!-- Single Comment Tab -->
+        <div id="singleTab" class="tab-content active">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="commentInput">
+                        <i class="fas fa-comment-dots"></i> Digite o comentário para análise (em inglês):
+                    </label>
+                    <textarea 
+                        id="commentInput" 
+                        class="form-input form-textarea" 
+                        placeholder="Digite aqui o comentário que você deseja analisar..."
+                        maxlength="1000"
+                    ></textarea>
+                </div>
+                <button class="btn" onclick="analyzeSingleComment()">
+                    <i class="fas fa-search"></i> Analisar Comentário
+                </button>
+            </div>
+
+            <div class="loading" id="singleLoading">
+                <div class="spinner"></div>
+                <p>Analisando comentário...</p>
+            </div>
+
+            <div class="results-section" id="singleResults">
+                <div class="single-result">
+                    <div id="singleResultIcon" class="result-icon"></div>
+                    <div id="singleResultText" class="result-text"></div>
+                    <div id="singleConfidence" class="confidence-badge"></div>
+                    <div id="singleComment" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; font-style: italic;"></div>
+                    <button class="new-analysis-btn" onclick="resetSingleAnalysis()">
+                        <i class="fas fa-plus"></i> Nova Análise
+                    </button>
+                </div>
+            </div>
+
+            <div class="error-message" id="singleError"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
