@@ -6,16 +6,17 @@ API REST para classificação de comentários como discurso de ódio ou não, ut
 
 ```
 ML-Hate-Comments-Classification/
-├── frontend/               # Arquivos do frontend
+├── backend/                # Código-fonte do backend
+│   ├── config/             # Configurações da aplicação
+│   ├── controllers/        # Controllers (rotas da API)
+│   ├── services/           # Lógica de negócio e serviços
+│   ├── tests/              # Testes automatizados
+│   └── utils/              # Funções utilitárias
+├── frontend/               # Arquivos do frontend (HTML, CSS, JS)
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
-├── app.py                  # Arquivo principal da aplicação
-├── config/                 # Configurações
-├── controllers/            # Controllers (rotas)
-├── services/               # Serviços de negócio
-├── utils/                  # Utilitários
-├── tests/                  # Testes automatizados
+├── app.py                  # Ponto de entrada da aplicação
 ├── hate_speech_classifier_model.pkl # Modelo treinado
 ├── HATE_COMMENTS_CLASSIFICATION.ipynb # Notebook com código de treinamento
 └── requirements.txt        # Dependências
@@ -123,15 +124,16 @@ Para mais detalhes sobre os testes, consulte o `README.md` dentro da pasta `test
 
 ## 🏗️ Arquitetura
 
-O projeto segue uma arquitetura em camadas:
+O projeto segue uma arquitetura em camadas, modularizada dentro da pasta `backend`:
 
-1.  **Frontend**: Interface do usuário (HTML/CSS/JS) para interação com a API.
-2.  **Controllers**: Responsáveis por receber requisições HTTP da API e retornar respostas.
-3.  **Services**: Contém a lógica de negócio (carregamento e uso do modelo ML).
-4.  **Utils**: Funções auxiliares reutilizáveis.
-5.  **Config**: Configurações centralizadas da aplicação.
+1.  **Frontend**: Interface do usuário (`frontend/`) para interação com a API.
+2.  **Backend**: Aplicação principal (`backend/`) que contém:
+    -   **Controllers**: Responsáveis por receber requisições HTTP da API e retornar respostas.
+    -   **Services**: Contém a lógica de negócio (carregamento e uso do modelo ML).
+    -   **Utils**: Funções auxiliares reutilizáveis.
+    -   **Config**: Configurações centralizadas da aplicação.
 
-Esta estrutura facilita:
+Essa estrutura facilita:
 - Manutenção e evolução do código
 - Testes unitários e de integração
 - Reutilização de componentes
