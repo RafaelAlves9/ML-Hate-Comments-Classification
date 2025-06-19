@@ -11,10 +11,7 @@ import joblib
 import os
 import sys
 
-# Adicionar diretório raiz ao path para imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from utils.text_preprocessor import preprocess_text
+from backend.utils.text_preprocessor import preprocess_text
 
 
 class TestModelPerformance:
@@ -41,7 +38,7 @@ class TestModelPerformance:
     def setup_test_data(self):
         """Fixture para carregar e preparar dados de teste"""
         # Carregar dataset
-        data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'hate.csv')
+        data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'hate.csv')
         if not os.path.exists(data_path):
             pytest.skip("Dataset hate.csv não encontrado")
         
@@ -94,7 +91,7 @@ class TestModelPerformance:
     @pytest.fixture(scope="class")
     def model(self):
         """Fixture para carregar o modelo"""
-        model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'hate_speech_classifier_model.pkl')
+        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'hate_speech_classifier_model.pkl')
         if not os.path.exists(model_path):
             pytest.skip("Modelo não encontrado")
             

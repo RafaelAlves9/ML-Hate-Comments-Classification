@@ -3,9 +3,9 @@ Controller responsável pelas rotas de predição
 """
 from flask import jsonify, request
 from datetime import datetime
-from services.model_service import model_service
-from config.settings import ERROR_MESSAGES, MAX_BATCH_SIZE, logger
-from utils.text_preprocessor import validate_comment
+from backend.services.model_service import model_service
+from backend.config.settings import ERROR_MESSAGES, MAX_BATCH_SIZE, logger
+from backend.utils.text_preprocessor import validate_comment
 
 
 def predict():

@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import Mock, patch
 import json
 from flask import Flask
-from controllers import prediction_controller, health_controller
+from backend.controllers import prediction_controller, health_controller
 
 
 class TestControllers:
@@ -29,7 +29,7 @@ class TestControllers:
         """Fixture para criar cliente de teste"""
         return app.test_client()
     
-    @patch('controllers.health_controller.model_service')
+    @patch('backend.controllers.health_controller.model_service')
     def test_home_endpoint(self, mock_service, client):
         """Testa endpoint home"""
         # Configurar mock
@@ -46,7 +46,7 @@ class TestControllers:
         assert data['model_loaded'] is True
         assert 'endpoints' in data
     
-    @patch('controllers.health_controller.model_service')
+    @patch('backend.controllers.health_controller.model_service')
     def test_health_check_endpoint(self, mock_service, client):
         """Testa endpoint de health check"""
         # Configurar mock
@@ -62,7 +62,7 @@ class TestControllers:
         assert data['model_loaded'] is True
         assert 'timestamp' in data
     
-    @patch('controllers.prediction_controller.model_service')
+    @patch('backend.controllers.prediction_controller.model_service')
     def test_predict_endpoint_success(self, mock_service, client):
         """Testa predição bem-sucedida"""
         # Configurar mock
@@ -90,7 +90,7 @@ class TestControllers:
         assert data['is_hate_speech'] is False
         assert data['confidence'] == 85.5
     
-    @patch('controllers.prediction_controller.model_service')
+    @patch('backend.controllers.prediction_controller.model_service')
     def test_predict_endpoint_model_not_loaded(self, mock_service, client):
         """Testa erro quando modelo não está carregado"""
         # Configurar mock
@@ -106,7 +106,7 @@ class TestControllers:
         assert response.status_code == 500
         assert data['error'] == 'Modelo não carregado'
     
-    @patch('controllers.prediction_controller.model_service')
+    @patch('backend.controllers.prediction_controller.model_service')
     def test_predict_endpoint_missing_comment(self, mock_service, client):
         """Testa erro quando comentário está ausente"""
         # Configurar mock para evitar erro interno

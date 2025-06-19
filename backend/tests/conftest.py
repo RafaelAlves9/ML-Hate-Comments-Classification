@@ -6,7 +6,7 @@ import sys
 import os
 
 # Adicionar diretório raiz ao path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def pytest_configure(config):
@@ -45,7 +45,7 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Retorna o diretório de dados de teste"""
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 @pytest.fixture(scope="session")

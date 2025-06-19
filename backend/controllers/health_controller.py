@@ -3,8 +3,8 @@ Controller responsável pelas rotas de health check e informações
 """
 from flask import jsonify
 from datetime import datetime
-from services.model_service import model_service
-from config.settings import ERROR_MESSAGES
+from backend.services.model_service import model_service
+from backend.config.settings import ERROR_MESSAGES
 
 
 def home():

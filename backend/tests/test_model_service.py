@@ -5,8 +5,8 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock, mock_open
 import json
 import numpy as np
-from services.model_service import ModelService
-from config.settings import RESPONSE_LABELS
+from backend.services.model_service import ModelService
+from backend.config.settings import RESPONSE_LABELS
 
 
 class TestModelService:
@@ -17,8 +17,8 @@ class TestModelService:
         """Fixture para criar instância do ModelService"""
         return ModelService()
     
-    @patch('services.model_service.joblib.load')
-    @patch('services.model_service.os.path.exists')
+    @patch('backend.services.model_service.joblib.load')
+    @patch('backend.services.model_service.os.path.exists')
     @patch('builtins.open', new_callable=mock_open, read_data='{"accuracy": 0.95}')
     def test_load_model_success(self, mock_file_open, mock_exists, mock_joblib, service):
         """Testa carregamento bem-sucedido do modelo"""
@@ -35,7 +35,7 @@ class TestModelService:
         assert service.model_info == {"accuracy": 0.95}
         mock_joblib.assert_called_once()
     
-    @patch('services.model_service.os.path.exists')
+    @patch('backend.services.model_service.os.path.exists')
     def test_load_model_file_not_found(self, mock_exists, service):
         """Testa erro quando arquivo do modelo não existe"""
         # Configurar mock
@@ -63,7 +63,7 @@ class TestModelService:
         service.model_info = {"accuracy": 0.95}
         assert service.get_model_info() == {"accuracy": 0.95}
     
-    @patch('services.model_service.preprocess_text')
+    @patch('backend.services.model_service.preprocess_text')
     def test_predict_single_success(self, mock_preprocess, service):
         """Testa predição bem-sucedida de um comentário"""
         # Configurar mocks
@@ -83,7 +83,7 @@ class TestModelService:
         assert result['confidence'] == 80.0
         assert result['confidence_method'] == 'probability'
     
-    @patch('services.model_service.preprocess_text')
+    @patch('backend.services.model_service.preprocess_text')
     def test_predict_single_empty_comment(self, mock_preprocess, service):
         """Testa predição com comentário vazio"""
         # Configurar mock

@@ -1,15 +1,10 @@
-"""
-API de Classificação de Discurso de Ódio
-Arquivo principal da aplicação Flask
-"""
 from flask import Flask
 from flask_cors import CORS
-from services.model_service import model_service
-from controllers import prediction_controller, health_controller
-from config.settings import HOST, PORT, logger
+from backend.services.model_service import model_service
+from backend.controllers import prediction_controller, health_controller
+from backend.config.settings import HOST, PORT, logger
 import webbrowser
 import threading
-
 
 # Configuração da aplicação Flask com suporte a CORS e arquivos estáticos
 app = Flask(__name__, static_folder='frontend', static_url_path='')
@@ -64,7 +59,9 @@ if __name__ == '__main__':
         # Abrir navegador após um pequeno delay
         def open_browser():
             """Abre o navegador na URL da aplicação"""
-            webbrowser.open_new(f"http://{HOST}:{PORT}")
+            # Usar 'localhost' para garantir que funcione em todos os sistemas
+            url_to_open = f"http://localhost:{PORT}"
+            webbrowser.open_new(url_to_open)
 
         threading.Timer(1.5, open_browser).start()
         

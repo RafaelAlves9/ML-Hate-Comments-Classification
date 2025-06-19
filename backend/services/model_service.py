@@ -6,8 +6,8 @@ import json
 import os
 import numpy as np
 from datetime import datetime
-from config.settings import MODEL_PATH, MODEL_INFO_PATH, RESPONSE_LABELS, logger
-from utils.text_preprocessor import preprocess_text
+from backend.config.settings import MODEL_PATH, MODEL_INFO_PATH, RESPONSE_LABELS, logger
+from backend.utils.text_preprocessor import preprocess_text
 
 
 class ModelService:
