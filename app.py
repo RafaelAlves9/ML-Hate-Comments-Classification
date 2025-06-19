@@ -1,280 +1,68 @@
-from flask import Flask, request, jsonify
+"""
+API de Classificação de Discurso de Ódio
+Arquivo principal da aplicação Flask
+"""
+from flask import Flask
 from flask_cors import CORS
-import joblib
-import json
-import re
-import string
-import pandas as pd
-import numpy as np
-import os
-from datetime import datetime
-import logging
+from services.model_service import model_service
+from controllers import prediction_controller, health_controller
+from config.settings import HOST, PORT, logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
+# Criar aplicação Flask
 app = Flask(__name__)
 CORS(app)
 
-model = None
-model_info = None
 
-def load_model():
-    global model, model_info
-    
+# Registrar rotas de health e informações
+app.add_url_rule('/', 'home', health_controller.home, methods=['GET'])
+app.add_url_rule('/health', 'health_check', health_controller.health_check, methods=['GET'])
+app.add_url_rule('/model-info', 'get_model_info', health_controller.get_model_info, methods=['GET'])
+
+
+# Registrar rotas de predição
+app.add_url_rule('/predict', 'predict', prediction_controller.predict, methods=['POST'])
+app.add_url_rule('/predict/batch', 'predict_batch', prediction_controller.predict_batch, methods=['POST'])
+
+
+# Registrar handlers de erro
+app.register_error_handler(404, health_controller.handle_404)
+app.register_error_handler(405, health_controller.handle_405)
+app.register_error_handler(500, health_controller.handle_500)
+
+
+def initialize_app():
+    """Inicializa a aplicação carregando o modelo"""
     try:
-        if os.path.exists('hate_speech_classifier_model.pkl'):
-            model = joblib.load('hate_speech_classifier_model.pkl')
-            logger.info("✅ Modelo carregado com sucesso!")
-        else:
-            raise FileNotFoundError("Arquivo do modelo não encontrado!")
+        logger.info("🚀 Iniciando aplicação...")
+        model_service.load_model()
+        logger.info("✅ Aplicação inicializada com sucesso!")
         
-        if os.path.exists('model_info.json'):
-            with open('model_info.json', 'r') as f:
-                model_info = json.load(f)
-            logger.info("✅ Informações do modelo carregadas com sucesso!")
-        else:
-            logger.warning("⚠️ Arquivo de informações do modelo não encontrado!")
-            model_info = {}
-            
-    except Exception as e:
-        logger.error(f"❌ Erro ao carregar o modelo: {e}")
-        raise e
-
-def preprocess_text(text):
-    if pd.isna(text) or text is None:
-        return ""
-    
-    text = str(text).lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    text = re.sub(r'\d+', '', text)
-    text = ' '.join(text.split())
-    
-    return text
-
-def predict_hate_speech(comment, model):
-    try:
-        processed_comment = preprocess_text(comment)
-        
-        if not processed_comment.strip():
-            return "Comentário inválido", 0.0, "error"
-        
-        prediction = model.predict([processed_comment])[0]
-        
-        confidence = 0.0
-        confidence_method = "none"
-        
-        try:
-            probability = model.predict_proba([processed_comment])[0]
-            confidence = max(probability) * 100
-            confidence_method = "probability"
-        except AttributeError:
-            try:
-                decision = model.decision_function([processed_comment])[0]
-                confidence = 100 * (1 / (1 + np.exp(-abs(decision))))
-                confidence_method = "decision_function"
-            except:
-                confidence = 50.0
-                confidence_method = "default"
-        
-        result = "Não é discurso de ódio" if prediction == 1 else "É discurso de ódio"
-        
-        return result, confidence, confidence_method
-        
-    except Exception as e:
-        logger.error(f"Erro na predição: {e}")
-        return "Erro na predição", 0.0, "error"
-
-@app.route('/', methods=['GET'])
-def home():
-    return jsonify({
-        'status': 'API funcionando!',
-        'model_loaded': model is not None,
-        'model_info': model_info if model_info else {},
-        'endpoints': {
-            'predict': '/predict (POST)',
-            'health': '/health (GET)',
-            'model_info': '/model-info (GET)'
-        }
-    })
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'model_loaded': model is not None,
-        'timestamp': datetime.now().isoformat()
-    })
-
-@app.route('/model-info', methods=['GET'])
-def get_model_info():
-    if model_info:
-        return jsonify(model_info)
-    else:
-        return jsonify({'error': 'Informações do modelo não disponíveis'}), 404
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        if model is None:
-            return jsonify({
-                'error': 'Modelo não carregado',
-                'message': 'O modelo de ML não foi carregado corretamente'
-            }), 500
-        
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'error': 'Dados inválidos',
-                'message': 'Requisição deve conter JSON válido'
-            }), 400
-        
-        if 'comment' not in data:
-            return jsonify({
-                'error': 'Campo obrigatório ausente',
-                'message': 'Campo "comment" é obrigatório'
-            }), 400
-        
-        comment = data['comment']
-        
-        if not comment or not isinstance(comment, str):
-            return jsonify({
-                'error': 'Comentário inválido',
-                'message': 'Campo "comment" deve ser uma string não vazia'
-            }), 400
-        
-        result, confidence, confidence_method = predict_hate_speech(comment, model)
-        
-        if confidence_method == "error":
-            return jsonify({
-                'error': 'Erro na predição',
-                'message': result
-            }), 500
-        
-        response = {
-            'comment': comment,
-            'prediction': result,
-            'is_hate_speech': result == "É discurso de ódio",
-            'confidence': round(confidence, 2),
-            'confidence_method': confidence_method,
-            'processed_comment': preprocess_text(comment),
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        logger.info(f"Predição realizada: {result} (confiança: {confidence:.2f}%)")
-        
-        return jsonify(response)
-        
-    except Exception as e:
-        logger.error(f"Erro no endpoint /predict: {e}")
-        return jsonify({
-            'error': 'Erro interno do servidor',
-            'message': str(e)
-        }), 500
-
-@app.route('/predict/batch', methods=['POST'])
-def predict_batch():
-    try:
-        if model is None:
-            return jsonify({
-                'error': 'Modelo não carregado',
-                'message': 'O modelo de ML não foi carregado corretamente'
-            }), 500
-        
-        data = request.get_json()
-        
-        if not data or 'comments' not in data:
-            return jsonify({
-                'error': 'Campo obrigatório ausente',
-                'message': 'Campo "comments" é obrigatório'
-            }), 400
-        
-        comments = data['comments']
-        
-        if not isinstance(comments, list):
-            return jsonify({
-                'error': 'Formato inválido',
-                'message': 'Campo "comments" deve ser uma lista'
-            }), 400
-        
-        if len(comments) > 100:
-            return jsonify({
-                'error': 'Muitos comentários',
-                'message': 'Máximo de 100 comentários por requisição'
-            }), 400
-        
-        results = []
-        
-        for i, comment in enumerate(comments):
-            if not comment or not isinstance(comment, str):
-                results.append({
-                    'index': i,
-                    'comment': comment,
-                    'error': 'Comentário inválido'
-                })
-                continue
-            
-            result, confidence, confidence_method = predict_hate_speech(comment, model)
-            
-            results.append({
-                'index': i,
-                'comment': comment,
-                'prediction': result,
-                'is_hate_speech': result == "É discurso de ódio",
-                'confidence': round(confidence, 2),
-                'confidence_method': confidence_method
-            })
-        
-        return jsonify({
-            'results': results,
-            'total_processed': len(results),
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro no endpoint /predict/batch: {e}")
-        return jsonify({
-            'error': 'Erro interno do servidor',
-            'message': str(e)
-        }), 500
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'error': 'Endpoint não encontrado',
-        'message': 'Verifique a URL e o método HTTP'
-    }), 404
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({
-        'error': 'Método não permitido',
-        'message': 'Verifique o método HTTP da requisição'
-    }), 405
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({
-        'error': 'Erro interno do servidor',
-        'message': 'Ocorreu um erro inesperado'
-    }), 500
-
-if __name__ == '__main__':
-    try:
-        load_model()
-        
-        print("🚀 Iniciando servidor Flask...")
-        print("📊 API de Classificação de Discurso de Ódio")
+        print("\n📊 API de Classificação de Discurso de Ódio")
+        print("=" * 50)
         print("🔗 Endpoints disponíveis:")
         print("   GET  / - Status da API")
         print("   GET  /health - Health check")
         print("   GET  /model-info - Informações do modelo")
         print("   POST /predict - Classificar um comentário")
         print("   POST /predict/batch - Classificar múltiplos comentários")
-        
-        app.run(host='0.0.0.0', port=5000)
+        print("=" * 50)
+        print(f"\n🌐 Servidor rodando em http://{HOST}:{PORT}\n")
         
     except Exception as e:
-        logger.error(f"❌ Erro ao iniciar o servidor: {e}")
-        print("Certifique-se de que os arquivos do modelo estão no diretório correto!")
+        logger.error(f"❌ Erro ao inicializar aplicação: {e}")
+        print("\n⚠️  Certifique-se de que os arquivos do modelo estão no diretório correto!")
+        raise e
+
+
+if __name__ == '__main__':
+    try:
+        # Inicializar aplicação
+        initialize_app()
+        
+        # Executar servidor
+        app.run(host=HOST, port=PORT, debug=False)
+        
+    except Exception as e:
+        logger.error(f"❌ Erro fatal: {e}")
+        exit(1)
