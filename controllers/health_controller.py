@@ -12,12 +12,9 @@ def home():
     return jsonify({
         'status': 'API funcionando!',
         'model_loaded': model_service.is_loaded(),
-        'model_info': model_service.get_model_info(),
         'endpoints': {
-            'predict': '/predict (POST)',
-            'health': '/health (GET)',
-            'batch_predict': '/predict/batch (POST)',
-            'model_info': '/model-info (GET)'
+            'predict': '/api/predict (POST)',
+            'health': '/api/health (GET)',
         }
     })
 
@@ -29,17 +26,6 @@ def health_check():
         'model_loaded': model_service.is_loaded(),
         'timestamp': datetime.now().isoformat()
     })
-
-
-def get_model_info():
-    """Endpoint para obter informações do modelo"""
-    if not model_service.is_loaded():
-        return jsonify({
-            'error': 'Modelo não carregado',
-            'message': 'O modelo precisa ser carregado antes de obter suas informações'
-        }), 503
-    
-    return jsonify(model_service.get_model_info())
 
 
 def handle_404(error):

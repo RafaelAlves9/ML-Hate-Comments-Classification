@@ -103,47 +103,6 @@ class ModelService:
                 'result': None
             }
     
-    def predict_batch(self, comments):
-        """
-        Faz predição para múltiplos comentários.
-        
-        Args:
-            comments: Lista de comentários a serem classificados
-            
-        Returns:
-            list: Lista de resultados das predições
-        """
-        results = []
-        
-        for i, comment in enumerate(comments):
-            if not comment or not isinstance(comment, str):
-                results.append({
-                    'index': i,
-                    'comment': comment,
-                    'error': 'Comentário inválido'
-                })
-                continue
-            
-            prediction_result = self.predict_single(comment)
-            
-            if prediction_result['error']:
-                results.append({
-                    'index': i,
-                    'comment': comment,
-                    'error': prediction_result['message']
-                })
-            else:
-                results.append({
-                    'index': i,
-                    'comment': prediction_result['comment'],
-                    'prediction': prediction_result['prediction'],
-                    'is_hate_speech': prediction_result['is_hate_speech'],
-                    'confidence': prediction_result['confidence'],
-                    'confidence_method': prediction_result['confidence_method']
-                })
-        
-        return results
-    
     def _calculate_confidence(self, processed_text):
         """
         Calcula a confiança da predição.

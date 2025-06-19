@@ -97,31 +97,6 @@ class TestModelService:
         assert result['error'] is True
         assert result['message'] == 'Comentário inválido'
     
-    @pytest.mark.parametrize("comments,expected_count", [
-        (["Comentário 1", "Comentário 2", None, "Comentário 3"], 4),
-        (["Test"], 1),
-        ([], 0)
-    ])
-    def test_predict_batch(self, service, comments, expected_count):
-        """Testa predição em lote com diferentes entradas"""
-        # Configurar mock
-        service.model = Mock()
-        service.model.predict.return_value = [1]  # Não é discurso de ódio
-        service.model.predict_proba.return_value = [[0.9, 0.1]]
-        
-        # Executar
-        results = service.predict_batch(comments)
-        
-        # Verificar
-        assert len(results) == expected_count
-        
-        # Verificar resultados válidos
-        for i, result in enumerate(results):
-            if comments[i] is not None:
-                assert result['prediction'] == RESPONSE_LABELS['NOT_HATE_SPEECH']
-            else:
-                assert result['error'] == 'Comentário inválido'
-    
     def test_calculate_confidence_probability(self, service):
         """Testa cálculo de confiança usando probabilidade"""
         # Configurar mock
