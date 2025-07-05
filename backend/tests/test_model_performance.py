@@ -17,32 +17,20 @@ from backend.utils.text_preprocessor import preprocess_text
 class TestModelPerformance:
     """Testes de desempenho do modelo com thresholds definidos"""
     
-    # THRESHOLDS DE DESEMPENHO - Valores mínimos aceitáveis
-    # NOTA: Estes valores foram ajustados para o modelo atual de desenvolvimento
-    # Em produção, recomenda-se valores mais altos (ex: 0.80+ para todas as métricas)
-    MIN_ACCURACY = 0.25  # 25% de acurácia mínima (MUITO BAIXO - apenas para desenvolvimento)
-    MIN_PRECISION = 0.25  # 25% de precisão mínima (MUITO BAIXO - apenas para desenvolvimento) 
-    MIN_RECALL = 0.25  # 25% de recall mínimo (MUITO BAIXO - apenas para desenvolvimento)
-    MIN_F1_SCORE = 0.25  # 25% de F1-score mínimo (MUITO BAIXO - apenas para desenvolvimento)
+    MIN_ACCURACY = 0.25
+    MIN_PRECISION = 0.25
+    MIN_RECALL = 0.25
+    MIN_F1_SCORE = 0.25
     
-    # Thresholds ideais para produção (comentados para referência)
-    # PROD_MIN_ACCURACY = 0.80  # 80% de acurácia mínima
-    # PROD_MIN_PRECISION = 0.75  # 75% de precisão mínima
-    # PROD_MIN_RECALL = 0.75  # 75% de recall mínimo  
-    # PROD_MIN_F1_SCORE = 0.75  # 75% de F1-score mínimo
-    
-    # Tamanho mínimo do dataset de teste
     MIN_TEST_SIZE = 100
     
     @pytest.fixture(scope="class")
     def setup_test_data(self):
         """Fixture para carregar e preparar dados de teste"""
-        # Carregar dataset
         data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'hate.csv')
         if not os.path.exists(data_path):
             pytest.skip("Dataset hate.csv não encontrado")
         
-        # Tentar diferentes encodings
         encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
         df = None
         
@@ -56,26 +44,17 @@ class TestModelPerformance:
         if df is None:
             pytest.skip("Não foi possível ler o arquivo CSV com nenhum encoding")
         
-        # Verificar colunas necessárias
         required_columns = ['comment', 'label']
         if not all(col in df.columns for col in required_columns):
             pytest.skip("Dataset não possui colunas necessárias")
         
-        # Remover linhas com valores nulos
         df = df.dropna(subset=['comment', 'label'])
         
-        # Converter labels para binário
-        # Baseado na análise do dataset:
-        # 'N' = Não é discurso de ódio (1)
-        # 'P' e 'O' = Potencialmente ódio ou outro, tratar como ódio (0)
-        # Isso mantém uma abordagem conservadora onde apenas 'N' é considerado seguro
         df['label_binary'] = df['label'].apply(lambda x: 1 if x == 'N' else 0)
         
-        # Preparar dados
         X = df['comment'].apply(preprocess_text).values
         y = df['label_binary'].values
         
-        # Dividir em treino e teste (usando 20% para teste)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
@@ -119,10 +98,8 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular acurácia
         accuracy = accuracy_score(y_test, y_pred)
         
         assert accuracy >= self.MIN_ACCURACY, \
@@ -133,10 +110,8 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular precisão (média ponderada para classes desbalanceadas)
         precision = precision_score(y_test, y_pred, average='weighted')
         
         assert precision >= self.MIN_PRECISION, \
@@ -147,10 +122,8 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular recall (média ponderada para classes desbalanceadas)
         recall = recall_score(y_test, y_pred, average='weighted')
         
         assert recall >= self.MIN_RECALL, \
@@ -161,10 +134,8 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular F1-score (média ponderada para classes desbalanceadas)
         f1 = f1_score(y_test, y_pred, average='weighted')
         
         assert f1 >= self.MIN_F1_SCORE, \
@@ -175,18 +146,15 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular métricas por classe
         precision_per_class = precision_score(y_test, y_pred, average=None)
         recall_per_class = recall_score(y_test, y_pred, average=None)
         
-        # Verificar se a diferença entre classes não é muito grande
         precision_diff = abs(precision_per_class[0] - precision_per_class[1])
         recall_diff = abs(recall_per_class[0] - recall_per_class[1])
         
-        MAX_DIFF = 0.25  # Diferença máxima aceitável entre classes
+        MAX_DIFF = 0.25
         
         assert precision_diff <= MAX_DIFF, \
             f"Diferença de precisão entre classes ({precision_diff:.2%}) é muito alta (máximo: {MAX_DIFF:.2%})"
@@ -198,26 +166,19 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular matriz de confusão
         cm = confusion_matrix(y_test, y_pred)
         
-        # Calcular taxa de falsos positivos e falsos negativos
         total_samples = cm.sum()
-        false_positives = cm[0, 1]  # Previu ódio mas não era
-        false_negatives = cm[1, 0]  # Era ódio mas previu que não
+        false_positives = cm[0, 1]
+        false_negatives = cm[1, 0]
         
         fp_rate = false_positives / total_samples
         fn_rate = false_negatives / total_samples
         
-        MAX_FP_RATE = 0.35  # Taxa máxima de falsos positivos (ajustado para desenvolvimento)
-        MAX_FN_RATE = 0.40  # Taxa máxima de falsos negativos (ajustado para desenvolvimento)
-        
-        # Valores ideais para produção:
-        # PROD_MAX_FP_RATE = 0.10  # Taxa máxima de 10% de falsos positivos
-        # PROD_MAX_FN_RATE = 0.10  # Taxa máxima de 10% de falsos negativos
+        MAX_FP_RATE = 0.35
+        MAX_FN_RATE = 0.40
         
         assert fp_rate <= MAX_FP_RATE, \
             f"Taxa de falsos positivos ({fp_rate:.2%}) está muito alta (máximo: {MAX_FP_RATE:.2%})"
@@ -229,16 +190,13 @@ class TestModelPerformance:
         X_test = setup_test_data['X_test']
         y_test = setup_test_data['y_test']
         
-        # Fazer predições
         y_pred = model.predict(X_test)
         
-        # Calcular todas as métricas
         accuracy = accuracy_score(y_test, y_pred)
         precision = precision_score(y_test, y_pred, average='weighted')
         recall = recall_score(y_test, y_pred, average='weighted')
         f1 = f1_score(y_test, y_pred, average='weighted')
         
-        # Criar relatório
         report = f"""
         === RELATÓRIO DE DESEMPENHO DO MODELO ===
         

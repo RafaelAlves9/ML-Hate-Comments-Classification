@@ -113,14 +113,7 @@ Para facilitar a execução, utilize o script `run_tests.py`:
 ```bash
 # Executar todos os testes
 python run_tests.py
-
-# Executar apenas os testes de desempenho do modelo
-python run_tests.py performance
-
-# Executar testes com relatório de cobertura de código
-python run_tests.py coverage
 ```
-Para mais detalhes sobre os testes, consulte o `README.md` dentro da pasta `tests`.
 
 ## 🏗️ Arquitetura
 
